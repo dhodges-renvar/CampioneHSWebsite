@@ -34,14 +34,8 @@ alter table web_submissions enable row level security;
 drop policy if exists web_submissions_office on web_submissions;
 create policy web_submissions_office on web_submissions
   for all to authenticated
-  using (
-    exists (select 1 from app_users u
-            where u.id = auth.uid() and u.role in ('owner','admin','office'))
-  )
-  with check (
-    exists (select 1 from app_users u
-            where u.id = auth.uid() and u.role in ('owner','admin','office'))
-  );
+  using (current_role_is(array['owner','admin','estimator']::app_role[]))
+  with check (current_role_is(array['owner','admin','estimator']::app_role[]));
 
 -- 4. slug -> enum -------------------------------------------------------------
 create or replace function web_division(p_slug text)

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import Image from 'next/image';
 import { heroFor } from '@/lib/heroes';
 import DeckRule from './DeckRule';
 
@@ -34,10 +35,8 @@ export default function Hero({
 
   const style: Record<string, string> = {};
   if (accent) style['--accent'] = accent;
-  if (img.src) {
-    style['--hero-img'] = `url(${img.src})`;
-    if (img.focus) style['--hero-pos'] = img.focus;
-  }
+  // Scrim strength, tuned per photograph in lib/heroes.ts.
+  if (img.src && img.dim != null) style['--hero-dim'] = String(img.dim);
 
   return (
     <section
@@ -45,6 +44,7 @@ export default function Hero({
         'hero',
         variant === 'home' ? 'hero--home' : '',
         align === 'center' ? 'hero--center' : '',
+        img.src ? 'hero--photo' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -52,7 +52,22 @@ export default function Hero({
     >
       <div className="hero__field" />
       <div className="hero__rake" />
-      <div className="hero__bg" />
+      {img.src && (
+        /* The hero photograph is the largest paint on the page, so it is the
+           LCP element. next/image gives it a responsive srcset and AVIF/WebP,
+           and `priority` preloads it instead of waiting on CSS to discover it.
+           Decorative — the h1 carries the meaning — hence the empty alt. */
+        <Image
+          className="hero__photo"
+          src={img.src}
+          alt=""
+          fill
+          priority
+          quality={72}
+          sizes="100vw"
+          style={{ objectFit: 'cover', objectPosition: img.focus ?? 'center' }}
+        />
+      )}
       <div className="hero__scrim" />
       <div className="hero__grain" />
 

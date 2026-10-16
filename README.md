@@ -2,8 +2,10 @@
 
 Next.js 14 (App Router) + TypeScript. No CSS framework, no component library,
 no runtime dependencies beyond React. Every page is statically generated.
-First-load JavaScript is ~96 kB; the only client component is the header menu
-and the lead form.
+First-load JavaScript is ~101 kB; the only client components are the header
+menu and the lead form. Hero photographs go through `next/image`, so each one
+is preloaded at high priority and served as AVIF or WebP at the width the
+device actually needs.
 
 ---
 
@@ -66,30 +68,61 @@ select * from v_web_leads limit 20;
 
 ---
 
-## 3. Adding photographs
+## 3. Photographs
 
-Background images appear in hero sections and nowhere else, by design. Until
-real job photography exists, every hero renders a built field — ink, a raked
-wash in that division's colour, and fine grain. It is designed to look
-finished on its own, so the site can launch today.
+Images appear in hero sections and nowhere else, by design.
 
-To add a photo:
+**Seven heroes carry a photograph today:** the homepage and all six division
+pages. **These seven are AI-generated.** They are atmosphere — a room, an eave,
+a driveway, a framed shell — chosen so each page has a real image behind the
+headline at launch. None of them contains a person, a logo, lettering, or
+anything presented as Campione's own work, and that is deliberate: a generated
+photo of a crew would be a claim a customer can check. Treat them as temporary
+and **do not upload any of them to the Google Business Profile**, which is
+meant to show the actual business.
 
-1. Drop the file in `public/img/hero/` — name it after the page key, e.g.
-   `painting.jpg`.
-2. Crop to **2400 × 1350** (16:9), export JPG at quality 72–78, aim for under
-   350 KB. Darker frames work best; the text scrim is tuned for a dark left
-   third.
-3. Open `lib/heroes.ts` and set the `src`. One line per hero.
+The four company pages — services, about, service area, contact — still render
+the built field: ink, a raked wash in the division colour, and fine grain. It
+looks finished on its own, and nobody judges a contractor's drywall from a
+photograph of a country road.
 
-`focus` controls `background-position` — use it to keep the subject out from
-behind the headline. `'right center'` is usually right for the left-aligned
-heroes.
+**Replacement order as real CompanyCam photography accumulates:** painting
+first (the only division with Local Services Ads behind it, so the most
+expensive traffic), then the homepage, then exteriors — the rot-repair
+argument on that page needs real proof. Pressure washing is the cheapest win:
+a driveway stopped half-done is a ten-second phone photo. Drywall and
+construction management matter most for credibility but are the hardest to
+shoot; wait for the right job rather than rushing them.
 
-**Shot list, in priority order:** a finished interior with real light; a
-cabinet kitchen after refinishing; a two-storey exterior mid-repaint with
-staging; a Level 5 wall under raking light; a driveway half washed; a crew on
-site in branded shirts. Pull candidates from CompanyCam first.
+One standing instruction to the crews does most of the work: **before you pack
+up, take one wide shot of the finished room or elevation with nobody in it,
+from the doorway or the street.** Wide, empty, finished. That is the hero shot.
+
+To swap one in:
+
+1. Drop the file in `public/img/hero/`, named after the page key, e.g.
+   `painting.jpg`. Crop to 16:9. Anything from **1600 px wide** up is plenty,
+   and there is no need to compress it by hand — Next generates the smaller
+   sizes and serves AVIF or WebP. (The 1672 px heroes in there now come down
+   as ~58 KB of AVIF on desktop, ~15 KB on a phone.)
+2. Open `lib/heroes.ts` and set the `src`. One line per hero.
+3. Delete the generated file it replaced, so it cannot come back in a later
+   deploy.
+
+Two settings per hero, both in `lib/heroes.ts`:
+
+- **`focus`** sets `object-position`. It keeps the subject out from behind the
+  headline — `'right center'` is right for these left-aligned heroes.
+- **`dim`** scales the dark scrim that guarantees the headline stays readable.
+  `1` is the default; drop toward `0.7` for an already-dark photograph so more
+  of it shows, push past `1` for a bright one. The values in the file were set
+  from each photo's measured brightness behind the headline, then checked by
+  screenshotting every hero and measuring the rendered contrast. Every one
+  clears WCAG AA. If you drop in a bright photo and the headline starts to
+  swim, raise its `dim` — that is the only knob you need.
+
+A photo that is slow or fails to load leaves the built field showing
+underneath, so a hero never renders as a blank box.
 
 ---
 
@@ -102,7 +135,7 @@ site in branded shirts. Pull candidates from CompanyCam first.
 | Division colours and their accessible text variants | `lib/divisions.ts` |
 | Homepage FAQ | `lib/faqs.ts` |
 | Cities and the notes beside them | `lib/areas.ts` |
-| Hero photographs | `lib/heroes.ts` |
+| Hero photographs, and how dark each one's scrim runs | `lib/heroes.ts` |
 | Design tokens — colour, type scale, spacing | `app/globals.css` (`:root`) |
 | Structured data | `lib/schema.ts` |
 
@@ -150,4 +183,6 @@ and `llms.txt` all pick it up with no further edits.
    at `/painting` rather than the homepage.
 3. Bing Webmaster Tools — two minutes, and it feeds ChatGPT search.
 4. Add the GBP link to `lib/site.ts`.
-5. Photography. This is the single biggest remaining lever on conversion.
+5. Real photography. The seven heroes in place now are generated stand-ins and
+   this is still the single biggest remaining lever on conversion — see
+   section 3 for the order to replace them in.

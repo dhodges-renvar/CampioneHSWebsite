@@ -1,12 +1,14 @@
-Hero photographs go here.
+Hero images. One per page key, 16:9.
 
-Name each file after its page key:
-  home.jpg  painting.jpg  drywall.jpg  exteriors.jpg
-  pressure-washing.jpg  cleaning.jpg  construction-management.jpg
-  services.jpg  about.jpg  contact.jpg  service-area.jpg
+Seven are in place: home, painting, drywall, exteriors, pressure-washing,
+cleaning, construction-management. ALL SEVEN ARE AI-GENERATED STAND-INS.
+They contain no people, no logos and no lettering, and none of them is
+Campione's own work. Do not upload them to the Google Business Profile.
 
-2400 x 1350 (16:9), JPG quality 72-78, under 350 KB each.
-Darker frames work best - the text scrim is tuned for a dark left third.
+Replace them with real CompanyCam photography as it accumulates. The order
+to do that in, and the two settings per hero, are in the site README,
+section 3. Paths are wired in lib/heroes.ts.
 
-Then set the path in lib/heroes.ts. One line per hero.
-Until you do, each hero renders a built field in that division's colour.
+Drop a replacement in here named after its page key, point lib/heroes.ts at
+it, and delete the file it replaced. 1600 px wide or more is plenty; Next
+handles the resizing and the AVIF/WebP conversion.

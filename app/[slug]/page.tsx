@@ -68,7 +68,10 @@ export default function DivisionPage({ params }: Params) {
           <>
             {d.name} in {SITE.city}, GA
             <br />
-            <span style={{ color: d.color }}>{d.tagline}</span>
+            {/* The division hue lightened for a dark hero — see .hero h1 .accent-line.
+                The raw colour is tuned for ink on paper and reads at about 1.5:1
+                against a near-black hero, which is not a headline, it is a stain. */}
+            <span className="accent-line">{d.tagline}</span>
           </>
         }
         lead={d.lead}

@@ -419,15 +419,11 @@ p:last-child {
   overflow: hidden;
 }
 
-/* Transparent by default so the built field shows through. A photograph, when
-   one is set, paints over it and the scrim handles contrast either way. */
-.hero__bg {
-  position: absolute;
-  inset: 0;
+/* The photograph, when there is one. Rendered by next/image so it gets a
+   responsive srcset and AVIF/WebP; this only places it in the stack. The built
+   field stays underneath, so a slow or failed image still reads as designed. */
+.hero__photo {
   z-index: -2;
-  background-image: var(--hero-img, none);
-  background-size: cover;
-  background-position: var(--hero-pos, center);
 }
 
 /* the built field — always present, sits under any photograph's scrim */
@@ -462,26 +458,50 @@ p:last-child {
   pointer-events: none;
 }
 
-/* scrim: guarantees text contrast whatever photograph gets dropped in */
-/* Only applied when a photograph is actually set — otherwise the built field is
-   already dark enough and a second scrim just flattens it. */
+/* scrim: guarantees text contrast over the photograph.
+   Only applied when a photograph is actually set — otherwise the built field is
+   already dark enough and a second scrim just flattens it.
+   --hero-dim scales the whole ramp per photograph (see lib/heroes.ts): a dark
+   frame gets less so more of it survives, a bright one gets more. */
 .hero__scrim {
   position: absolute;
   inset: 0;
   z-index: -1;
   background: none;
 }
-.hero[style*='--hero-img'] .hero__scrim {
+.hero--photo {
+  --hero-dim: 1;
+}
+.hero--photo .hero__scrim {
   background: linear-gradient(
       to right,
-      rgba(14, 17, 20, 0.94) 0%,
-      rgba(14, 17, 20, 0.84) 44%,
-      rgba(14, 17, 20, 0.5) 100%
+      /* flat and dark across the text column, then it opens onto the photograph.
+         The 72% stop is where the longest headline line ends at 1440px. */
+      rgba(14, 17, 20, calc(0.88 * var(--hero-dim))) 0%,
+      rgba(14, 17, 20, calc(0.86 * var(--hero-dim))) 52%,
+      rgba(14, 17, 20, calc(0.7 * var(--hero-dim))) 72%,
+      rgba(14, 17, 20, calc(0.26 * var(--hero-dim))) 100%
     ),
-    linear-gradient(to top, rgba(14, 17, 20, 0.85) 0%, transparent 55%);
+    linear-gradient(to top, rgba(14, 17, 20, 0.78) 0%, transparent 46%);
 }
-.hero--center[style*='--hero-img'] .hero__scrim {
-  background: linear-gradient(rgba(14, 17, 20, 0.82), rgba(14, 17, 20, 0.9));
+.hero--center.hero--photo .hero__scrim {
+  background: linear-gradient(
+    rgba(14, 17, 20, calc(0.8 * var(--hero-dim))),
+    rgba(14, 17, 20, calc(0.88 * var(--hero-dim)))
+  );
+}
+
+/* On a phone the headline sits over the whole frame, not a left column, so the
+   sideways ramp has nothing to protect — even it out instead. */
+@media (max-width: 700px) {
+  .hero--photo .hero__scrim {
+    background: linear-gradient(
+        to right,
+        rgba(14, 17, 20, calc(0.86 * var(--hero-dim))) 0%,
+        rgba(14, 17, 20, calc(0.74 * var(--hero-dim))) 100%
+      ),
+      linear-gradient(to top, rgba(14, 17, 20, 0.7) 0%, transparent 60%);
+  }
 }
 
 /* fine grain so large dark areas do not band on cheap panels */
@@ -493,6 +513,19 @@ p:last-child {
   mix-blend-mode: overlay;
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+/* The second headline line carries the division hue. The raw swatch is mixed
+   for ink on paper; on a dark hero it falls to roughly 1.5:1, so it gets lifted
+   toward white here. Enough white to clear large-text contrast with margin,
+   little enough that the hue still reads as that division's colour. */
+.hero h1 .accent-line {
+  color: color-mix(in srgb, var(--accent, #fff) 48%, #ffffff);
+}
+@supports not (color: color-mix(in srgb, red 50%, white)) {
+  .hero h1 .accent-line {
+    color: #fff;
+  }
 }
 
 .hero__inner {
@@ -1618,7 +1651,7 @@ textarea:focus {
     background: #fff !important;
     color: #000 !important;
   }
-  .hero__bg,
+  .hero__photo,
   .hero__field,
   .hero__scrim,
   .hero__grain,
