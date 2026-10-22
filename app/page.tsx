@@ -74,7 +74,7 @@ const PROCESS = [
   },
   {
     title: 'We do the work and walk it',
-    body: 'Protected, cleaned up daily, and inspected with you under a raking light before anyone invoices you.',
+    body: 'Protected, cleaned up daily, and walked with you before anyone invoices you.',
   },
 ];
 

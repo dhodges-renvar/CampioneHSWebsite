@@ -1,6 +1,16 @@
 import { NextResponse } from 'next/server';
 import { createHash } from 'crypto';
 import { SITE } from '@/lib/site';
+import { rateLimit, LEAD_PER_IP, LEAD_GLOBAL } from '@/lib/ratelimit';
+
+/** Biggest body we will even parse. A real lead is a couple of kB. */
+const MAX_BODY = 32 * 1024;
+
+/** Values go into a notification email as HTML, so they get escaped first. */
+const esc = (s: string) =>
+  s.replace(/[&<>"']/g, (c) =>
+    c === '&' ? '&amp;' : c === '<' ? '&lt;' : c === '>' ? '&gt;' : c === '"' ? '&quot;' : '&#39;'
+  );
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -54,7 +64,12 @@ async function toEmail(body: Payload) {
   if (!key || !to || !from) return { ok: false, reason: 'not_configured' as const };
 
   const rows = FIELDS.filter((f) => body[f])
-    .map((f) => `<tr><td style="padding:4px 12px 4px 0;color:#7a828a">${f}</td><td><b>${body[f]}</b></td></tr>`)
+    .map(
+      (f) =>
+        `<tr><td style="padding:4px 12px 4px 0;color:#7a828a">${esc(f)}</td><td><b>${esc(
+          body[f] as string
+        )}</b></td></tr>`
+    )
     .join('');
 
   const res = await fetch('https://api.resend.com/emails', {
@@ -63,7 +78,9 @@ async function toEmail(body: Payload) {
     body: JSON.stringify({
       from,
       to: to.split(',').map((s) => s.trim()),
-      subject: `New website lead — ${body.first_name || 'unknown'} (${body.division || 'general'})`,
+      subject: `New website lead — ${esc(body.first_name || 'unknown')} (${esc(
+        body.division || 'general'
+      )})`,
       html: `<h2 style="font-family:system-ui">New lead from ${SITE.url}</h2>
 <p style="font-family:system-ui">Call them back today. Speed to lead is the whole game.</p>
 <table style="font-family:system-ui;font-size:14px;border-collapse:collapse">${rows}</table>`,
@@ -76,9 +93,39 @@ async function toEmail(body: Payload) {
 }
 
 export async function POST(req: Request) {
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    req.headers.get('x-real-ip') ||
+    'unknown';
+
+  // Cheapest checks first: refuse before parsing anything or touching a service.
+  const perIp = rateLimit(`lead:${ip}`, LEAD_PER_IP);
+  const global = rateLimit('lead:all', LEAD_GLOBAL);
+  if (!perIp.ok || !global.ok) {
+    const retryAfter = Math.max(perIp.retryAfter, global.retryAfter);
+    return NextResponse.json(
+      {
+        ok: false,
+        error: `That is more requests than we can take right now. Please call or text ${SITE.phone}.`,
+      },
+      { status: 429, headers: { 'Retry-After': String(retryAfter) } }
+    );
+  }
+
+  // Cap the body before JSON.parse sees it — field length limits below only
+  // apply after parsing, which is too late to matter for a 10 MB payload.
+  const declared = Number(req.headers.get('content-length') || 0);
+  if (declared > MAX_BODY) {
+    return NextResponse.json({ ok: false, error: 'Request too large.' }, { status: 413 });
+  }
+
   let raw: unknown;
   try {
-    raw = await req.json();
+    const text = await req.text();
+    if (text.length > MAX_BODY) {
+      return NextResponse.json({ ok: false, error: 'Request too large.' }, { status: 413 });
+    }
+    raw = JSON.parse(text);
   } catch {
     return NextResponse.json({ ok: false, error: 'Bad request.' }, { status: 400 });
   }
@@ -112,11 +159,10 @@ export async function POST(req: Request) {
     );
   }
 
-  const ip =
-    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    req.headers.get('x-real-ip') ||
-    '';
-  body.ip_hash = ip ? createHash('sha256').update(ip).digest('hex').slice(0, 32) : '';
+  // The raw address is never stored — only a hash, which is enough to spot a
+  // repeat submitter without keeping personal data we have no use for.
+  body.ip_hash =
+    ip && ip !== 'unknown' ? createHash('sha256').update(ip).digest('hex').slice(0, 32) : '';
   body.user_agent = clean(req.headers.get('user-agent'), 300);
 
   const [db, mail] = await Promise.all([toSupabase(body), toEmail(body)]);

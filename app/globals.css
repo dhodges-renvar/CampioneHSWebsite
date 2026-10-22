@@ -972,12 +972,23 @@ p:last-child {
 }
 
 /* Stacked wordmark. White on black — no grey text on the dark bar. */
+/* The mark sits left of the wordmark. The mark's outer ring is currentColor,
+   so it turns white on the dark header and ink on the light surfaces without
+   needing a second asset. */
 .logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+.logo svg {
+  flex: none;
+}
+.logo__words {
   display: inline-flex;
   flex-direction: column;
   gap: 2px;
-  line-height: 1;
-  white-space: nowrap;
 }
 .logo b {
   font-size: 1.1875rem;

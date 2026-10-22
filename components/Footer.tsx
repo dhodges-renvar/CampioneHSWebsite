@@ -3,6 +3,7 @@ import { SITE, AREAS } from '@/lib/site';
 import { divisionsInDeckOrder } from '@/lib/divisions';
 import { IconPhone, IconMail, IconPin, IconClock } from './Icons';
 import DeckRule from './DeckRule';
+import Mark from './Mark';
 
 const decks = divisionsInDeckOrder();
 
@@ -14,8 +15,11 @@ export default function Footer() {
         <div className="footer__main">
           <div>
             <Link href="/" className="logo" aria-label={`${SITE.name} home`}>
-              <b>Campione</b>
-              <em>Home Services</em>
+              <Mark size={36} />
+              <span className="logo__words">
+                <b>Campione</b>
+                <em>Home Services</em>
+              </span>
             </Link>
             <p className="footer__blurb">
               Six divisions under one contractor, serving Monroe and metro Atlanta since{' '}
@@ -92,6 +96,10 @@ export default function Footer() {
         <div className="footer__bar">
           <span>
             © {new Date().getFullYear()} {SITE.legal}. All rights reserved.
+          </span>
+          <span style={{ display: 'flex', gap: '1.25rem' }}>
+            <Link href="/privacy">Privacy</Link>
+            <Link href="/terms">Terms</Link>
           </span>
           <span>
             {SITE.city}, {SITE.stateFull} · {SITE.county}

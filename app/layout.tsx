@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CallBar from '@/components/CallBar';
 import JsonLd from '@/components/JsonLd';
+import { Analytics } from '@vercel/analytics/next';
 import { SITE } from '@/lib/site';
 import { graph, localBusiness, website } from '@/lib/schema';
 
@@ -72,6 +73,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Footer />
         <CallBar />
         <JsonLd data={graph([localBusiness(), website()])} />
+        {/* Cookieless and aggregate — no consent banner, and the privacy policy
+            stays true. Needs Web Analytics switched on in the Vercel project;
+            until it is, this is inert. */}
+        <Analytics />
       </body>
     </html>
   );

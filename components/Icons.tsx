@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react';
 import type { IconKey } from '@/lib/divisions';
 
 const base = {
@@ -160,7 +161,8 @@ export const IconUsers = () => (
   </svg>
 );
 
-const MAP: Record<IconKey, () => JSX.Element> = {
+// React 19's types no longer declare a global JSX namespace.
+const MAP: Record<IconKey, () => ReactElement> = {
   roller: IconRoller,
   trowel: IconTrowel,
   siding: IconSiding,

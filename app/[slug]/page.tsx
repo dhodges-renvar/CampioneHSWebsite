@@ -18,7 +18,8 @@ import { DIVISIONS, getDivision, divisionsInDeckOrder } from '@/lib/divisions';
 import { SITE, AREAS } from '@/lib/site';
 import { graph, serviceNode, faqPage, breadcrumbs, webPage } from '@/lib/schema';
 
-type Params = { params: { slug: string } };
+// Next 15 hands route params in as a promise, so both entry points await it.
+type Params = { params: Promise<{ slug: string }> };
 
 /** Only the six divisions resolve here. Anything else is a 404, not a soft page. */
 export function generateStaticParams() {
@@ -26,8 +27,9 @@ export function generateStaticParams() {
 }
 export const dynamicParams = false;
 
-export function generateMetadata({ params }: Params): Metadata {
-  const d = getDivision(params.slug);
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
+  const { slug } = await params;
+  const d = getDivision(slug);
   if (!d) return {};
   return {
     title: d.metaTitle,
@@ -42,8 +44,9 @@ export function generateMetadata({ params }: Params): Metadata {
   };
 }
 
-export default function DivisionPage({ params }: Params) {
-  const d = getDivision(params.slug);
+export default async function DivisionPage({ params }: Params) {
+  const { slug } = await params;
+  const d = getDivision(slug);
   if (!d) notFound();
 
   const others = divisionsInDeckOrder().filter((x) => x.slug !== d.slug);

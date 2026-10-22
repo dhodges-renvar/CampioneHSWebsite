@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { DIVISIONS } from '@/lib/divisions';
 import { SITE } from '@/lib/site';
 import { IconCheck } from './Icons';
@@ -161,6 +162,12 @@ export default function LeadForm({ division = '' }: { division?: string }) {
         <a href={SITE.phoneHref} style={{ fontWeight: 700, textDecoration: 'underline' }}>
           {SITE.phone}
         </a>
+        <br />
+        We use your details only to quote and schedule your job — see our{' '}
+        <Link href="/privacy" style={{ textDecoration: 'underline' }}>
+          Privacy Policy
+        </Link>
+        .
       </p>
     </form>
   );

@@ -186,3 +186,102 @@ and `llms.txt` all pick it up with no further edits.
 5. Real photography. The seven heroes in place now are generated stand-ins and
    this is still the single biggest remaining lever on conversion — see
    section 3 for the order to replace them in.
+
+---
+
+## 6. Launch checklist
+
+Worked against a 20-point pre-launch list. Most of that list assumes an app
+with accounts, payments and an AI provider. This is a marketing site with one
+public write path — the estimate form — so a good many points do not apply.
+What follows is the honest verdict on each, and it is worth knowing which is
+which: an item marked N/A is not an item quietly skipped.
+
+### Done in code
+
+| # | Item | What was done |
+| --- | --- | --- |
+| 1 | Hide every API key | No key is in client code. The Supabase service-role key and the Resend key are read server-side in `app/api/lead/route.ts` only. Nothing is prefixed `NEXT_PUBLIC_`. `.gitignore` excludes `.env*.local`; `.env.example` holds placeholders, never values. |
+| 3 | Rate limiting | `lib/ratelimit.ts`. Five submissions per IP per ten minutes, sixty site-wide per hour, returning 429 with `Retry-After`. Checked **before** the body is parsed or any service is called, so a flood costs nothing. See the caveat below. |
+| 4 | Auth on every route | There is one route — `POST /api/lead` — and it is deliberately public. The Postgres function behind it is `security definer` with `execute` revoked from `public`, `anon` and `authenticated`, so it can only be called with the service-role key from the server. The browser never talks to Supabase. |
+| 5 | Database rules | RLS is on for `web_submissions`, with office roles only. The website never reads from the database at all; it only calls the one intake function. |
+| 6 | Validate every input on the server | Field allowlist — anything not in `FIELDS` is dropped. Per-field length caps. 32 KB body cap enforced before `JSON.parse`. Name required, and a valid phone or email required. Values are HTML-escaped before going into the notification email, so a message body cannot inject markup into Jorge's inbox. |
+| 8 | No stack traces | Every failure path returns a plain sentence and a phone number. Details go to `console.error` for the Vercel log, never to the response. Verified across malformed JSON, oversized bodies, validation failures and delivery failures. |
+| 11 | 404 and 500 that don't look broken | `app/not-found.tsx` was already there. Added `app/error.tsx` (route errors — keeps the brand, offers retry and the phone number) and `app/global-error.tsx` (a failure in the root layout itself — fully inline, depends on no stylesheet or component that might be the thing that broke). |
+| 14 | Meta tags and OG image | Already in place: per-page titles and descriptions, canonicals, and a dynamic OG card at `/opengraph-image` — now carrying the Campione mark. |
+| 15 | Privacy policy and terms | `/privacy` and `/terms`, linked in the footer and from the form. The privacy page describes what this site actually does — the real field list, the three processors, the hashed IP — rather than boilerplate. Google Ads and LSA both want a privacy policy on the landing site, so this was blocking anyway. |
+| 16 | Analytics | `@vercel/analytics` in the root layout. Cookieless and aggregate, so no consent banner and the privacy page stays true. **Switch Web Analytics on in the Vercel project or it stays inert.** |
+| 19 | A way to contact you | Form, phone and email on every page, plus the sticky call bar on mobile. |
+
+### Checked, already fine
+
+| # | Item | Finding |
+| --- | --- | --- |
+| 2 | Rotate committed keys | Nothing was ever committed. The repo has only `.env.example`. If a real key ever does land in a commit, rotate it in Supabase or Resend — rewriting git history is not enough, because the old value is already out. |
+| 12 | Cheap Android phone | 360 px wide renders correctly. No layout shift, tap targets at least 44 px, no horizontal scroll. Hero photos come down as AVIF at the device width — roughly 15 KB on a phone rather than 290 KB. |
+| 13 | Nothing over 3 seconds | A division page is **212 KB total, LCP ~0.7 s** locally. Every page is statically generated and served from the edge. The font is self-hosted, so there is no third-party round trip on first paint. |
+
+### Not applicable to this site
+
+| # | Item | Why |
+| --- | --- | --- |
+| 7 | AI provider spending cap | There is no AI provider. The nearest equivalent is the Vercel spend limit and the Resend plan ceiling — see below. |
+| 17 | Test signup, payment, password reset | None of these exist. No accounts, no checkout. The one flow to test is the estimate form, and it is covered below. |
+
+### Needs you, not code
+
+| # | Item | What to do |
+| --- | --- | --- |
+| 9 | Error tracking | Vercel logs every `console.error`, but nothing alerts you. Turn on **Log Drains** or set a Vercel monitor on 5xx responses from `/api/lead`. A form that silently fails is a business losing leads without knowing. |
+| 10 | Back up and test a restore | Supabase takes daily backups on paid plans. Taking one is not the point — **restoring one into a scratch project is**, and an untested backup is a rumour. Note this database is shared with the field app, so a restore affects both. |
+| 18 | Email deliverability | In Resend, verify `campionehomeservices.com` and publish the SPF, DKIM and DMARC records it gives you. Lead alerts going to spam is the single most expensive thing on this list. Send a test to a Gmail and a Microsoft 365 address and confirm both land in the inbox. |
+| — | Spend caps | Vercel → Settings → Billing → spend limit. Resend has a monthly send ceiling on the free tier. Both are worth setting before the ads start. |
+| — | Vercel Firewall | Project → Firewall → rate limiting on `/api/lead`. See the caveat below. |
+
+### The rate limiting caveat, stated plainly
+
+The limiter in `lib/ratelimit.ts` keeps its counters in memory, and on serverless
+each instance has its own. One machine hammering the endpoint gets stopped. A
+burst spread across many cold starts gets further than the numbers suggest.
+That is a real limitation, not a detail — the durable fix is Vercel's firewall,
+which runs at the edge before any function starts. Turn it on. The code-level
+limiter is the belt; the firewall is the braces.
+
+### Dependency advisories
+
+`npm audit` reports two postcss issues that can only be resolved by moving to
+Next 16. Both concern processing attacker-controlled CSS at build time. This
+site compiles one stylesheet, written by us, in CI. They are not reachable at
+runtime and the upgrade is not worth the churn before launch.
+
+The site was moved from Next 14.2.35 to **15.5.28** during this pass, because
+14.x carries an unpatched critical advisory (`CVE-2026-96889`, RCE via
+untrusted SVG through sharp) and a high-severity Server Actions DoS, and there
+is no 14.x backport. Neither was reachable here — the site uses no Server
+Actions, and the image optimizer accepts only local files because
+`remotePatterns` is unset — but "not currently exploitable" is a weaker
+position than "patched". React went to 19 with it. The only code changes
+required were awaiting `params` in `app/[slug]/page.tsx` and one type import
+in `components/Icons.tsx`.
+
+### Rollback plan
+
+Vercel keeps every previous deployment, so rolling back is seconds, not a
+rebuild:
+
+1. **Vercel → Deployments**, find the last good one, **⋯ → Promote to
+   Production**. Live in about ten seconds. Do this first and debug afterwards —
+   a broken site during an ad spend is expensive by the minute.
+2. **If the form is the problem but pages are fine**, leave the deploy up and
+   pull `SUPABASE_SERVICE_ROLE_KEY` from the environment. The form then shows
+   its honest "call us" error with the phone number instead of failing silently.
+   Leads keep arriving by phone while you fix it.
+3. **If a bad lead row reaches the database**, nothing on the website reads from
+   the database, so there is no public impact. Delete the row in Supabase.
+4. **If the domain itself is wrong** (DNS, certificate), the `*.vercel.app` URL
+   keeps working throughout. Point the Google Business Profile and any ads at
+   that temporarily rather than leaving a dead link in a paid ad.
+
+Before promoting any deploy to production, load the homepage, one division
+page, and submit the form with a real phone number. That is a ninety-second
+check that catches almost everything that matters.

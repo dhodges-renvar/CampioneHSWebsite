@@ -180,14 +180,14 @@ export const DIVISIONS: Division[] = [
       { title: 'Board takeoff', body: 'Square footage converted to actual sheet counts by size, so material is ordered for the job rather than guessed.' },
       { title: 'Hang', body: 'Screw pattern and board layout that minimizes butt joints in sightlines and keeps seams off the corners of openings.' },
       { title: 'Tape and finish', body: 'Tape, two fill coats, then finish — and a full skim on top if the scope is Level 5.' },
-      { title: 'Sand and light check', body: 'Sanded, then checked under raking light before the painter ever shows up. Catching it here is a fraction of the cost of catching it in primer.' },
+      { title: 'Sand and inspect', body: 'Sanded, then inspected before the painter ever shows up. Catching a flaw at this stage is a fraction of the cost of catching it in primer.' },
     ],
     included: [
       'Board, fasteners, tape, compound and corner bead',
       'Dust containment and daily debris removal',
       'Texture matched to adjacent existing surfaces',
       'Finish level stated by ASTM number in the written scope',
-      'Raking-light inspection before paint',
+      'Final surface inspection before paint',
     ],
     notIncluded: [
       'Framing corrections — bowed or out-of-plane studs are flagged, not fixed, unless added to scope',

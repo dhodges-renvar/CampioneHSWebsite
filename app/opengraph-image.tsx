@@ -23,19 +23,30 @@ export default function OgImage() {
           padding: '72px 76px 0',
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div
-            style={{
-              fontSize: 30,
-              fontWeight: 800,
-              letterSpacing: -1,
-              textTransform: 'uppercase',
-            }}
-          >
-            Campione
-          </div>
-          <div style={{ fontSize: 15, letterSpacing: 7, color: '#FFFFFF', marginTop: 4 }}>
-            HOME SERVICES
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          {/* the mark, drawn inline — Satori renders svg children, not <img> */}
+          <svg width="62" height="62" viewBox="0 0 100 100" fill="none">
+            <path
+              d="M83.25 66.22A36.99 36.99 0 1 1 69.05 18.29"
+              stroke="#FFFFFF"
+              strokeWidth="9.8"
+            />
+            <path d="M67.99 58.78A20.02 20.02 0 1 1 61.48 33.6" stroke="#2D6CA2" strokeWidth="8.5" />
+          </svg>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div
+              style={{
+                fontSize: 30,
+                fontWeight: 800,
+                letterSpacing: -1,
+                textTransform: 'uppercase',
+              }}
+            >
+              Campione
+            </div>
+            <div style={{ fontSize: 15, letterSpacing: 7, color: '#FFFFFF', marginTop: 4 }}>
+              HOME SERVICES
+            </div>
           </div>
         </div>
 

@@ -39,6 +39,10 @@ export const HERO_IMAGES: Record<string, Hero> = {
   contact: { src: '', focus: 'center' },
   'service-area': { src: '', focus: 'center' },
 
+  // legal pages stay on the built field — a photograph here would be decoration
+  privacy: { src: '', focus: 'center' },
+  terms: { src: '', focus: 'center' },
+
   painting: { src: '/img/hero/painting.jpg', focus: 'right center', dim: 0.96 },
   drywall: { src: '/img/hero/drywall.jpg', focus: 'right center', dim: 0.92 },
   exteriors: { src: '/img/hero/exteriors.jpg', focus: 'right center', dim: 1.0 },

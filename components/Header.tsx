@@ -7,6 +7,7 @@ import { SITE } from '@/lib/site';
 import { divisionsInDeckOrder } from '@/lib/divisions';
 import { IconPhone, IconMenu, IconClose, IconMail } from './Icons';
 import DeckRule from './DeckRule';
+import Mark from './Mark';
 
 const decks = divisionsInDeckOrder();
 
@@ -50,8 +51,11 @@ export default function Header() {
     <header className="header">
       <div className="wrap header__bar">
         <Link href="/" className="logo" aria-label={`${SITE.name} home`}>
-          <b>Campione</b>
-          <em>Home Services</em>
+          <Mark size={36} />
+          <span className="logo__words">
+            <b>Campione</b>
+            <em>Home Services</em>
+          </span>
         </Link>
 
         <nav className="nav" aria-label="Main">
