@@ -84,7 +84,7 @@ export const DIVISIONS: Division[] = [
       { title: 'Measured estimate', body: 'We measure on site, not from a photo. Every surface gets a quantity and a line item.' },
       { title: 'Written scope', body: 'You get the prep, the product, the sheen and the number of coats in writing before anyone tapes a baseboard.' },
       { title: 'Prep, then paint', body: 'Protection, repairs, caulk, prime, then coats. The order is not negotiable and it is where the longevity comes from.' },
-      { title: 'Walkthrough with a light', body: 'We walk it with you holding a bright light at a low angle. Anything you can see, we fix before we invoice.' },
+      { title: 'Walkthrough', body: 'We walk the finished work with you before anyone invoices. Anything you are not happy with, we put right.' },
     ],
     included: [
       'Furniture moved and covered, floors and fixtures protected',

@@ -2,6 +2,6 @@
   <rect width="100" height="100" rx="16" fill="#0E1114"/>
   <g transform="translate(50,50) scale(1.14) translate(-50,-50)" fill="none">
     <path d="M83.25 66.22A36.99 36.99 0 1 1 69.05 18.29" stroke="#FFFFFF" stroke-width="9.8"/>
-    <path d="M67.99 58.78A20.02 20.02 0 1 1 61.48 33.6" stroke="#2D6CA2" stroke-width="8.5"/>
+    <path d="M67.99 58.78A20.02 20.02 0 1 1 61.48 33.6" stroke="#9AA2AA" stroke-width="8.5"/>
   </g>
 </svg>

@@ -31,7 +31,7 @@ export default function OgImage() {
               stroke="#FFFFFF"
               strokeWidth="9.8"
             />
-            <path d="M67.99 58.78A20.02 20.02 0 1 1 61.48 33.6" stroke="#2D6CA2" strokeWidth="8.5" />
+            <path d="M67.99 58.78A20.02 20.02 0 1 1 61.48 33.6" stroke="#9AA2AA" strokeWidth="8.5" />
           </svg>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             <div

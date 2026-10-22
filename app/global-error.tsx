@@ -36,7 +36,7 @@ export default function GlobalError({
             />
             <path
               d="M67.99 58.78A20.02 20.02 0 1 1 61.48 33.6"
-              stroke="#2d6ca2"
+              stroke="#9aa2aa"
               strokeWidth="8.5"
             />
           </svg>

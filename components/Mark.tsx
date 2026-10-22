@@ -9,20 +9,24 @@
      inner ring  centreline r 20.02, stroke 8.50, arc 26° -> 305°
    in a 100 x 100 box centred at 50,50.
 
-   The outer ring is `currentColor`, so it inherits the surrounding text colour
-   — ink on paper, white on the dark header. The inner ring stays the painting
-   blue on both, which is what carries the brand.
+   Both rings are `currentColor`, the inner one at reduced opacity so it reads
+   as grey against whatever it sits on — light grey on the dark header, mid grey
+   on paper — without a second asset or a second colour to keep in sync.
+
+   The inner ring is deliberately NOT blue. Blue belongs to the painting
+   division; the parent brand is ink and grey, and a blue mark in the header
+   would say "painting company" on every page of a six-division site.
    ========================================================================== */
 
 type Props = {
   /** Rendered size in px. */
   size?: number;
-  /** Inner ring colour. Defaults to the painting blue. */
+  /** Inner ring colour. Defaults to currentColor at 55%, which reads as grey. */
   inner?: string;
   className?: string;
 };
 
-export default function Mark({ size = 34, inner = 'var(--painting)', className }: Props) {
+export default function Mark({ size = 34, inner, className }: Props) {
   return (
     <svg
       className={className}
@@ -38,7 +42,12 @@ export default function Mark({ size = 34, inner = 'var(--painting)', className }
         stroke="currentColor"
         strokeWidth="9.8"
       />
-      <path d="M67.99 58.78A20.02 20.02 0 1 1 61.48 33.6" stroke={inner} strokeWidth="8.5" />
+      <path
+        d="M67.99 58.78A20.02 20.02 0 1 1 61.48 33.6"
+        stroke={inner ?? 'currentColor'}
+        strokeOpacity={inner ? 1 : 0.55}
+        strokeWidth="8.5"
+      />
     </svg>
   );
 }
