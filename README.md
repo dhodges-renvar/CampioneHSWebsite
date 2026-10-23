@@ -55,6 +55,30 @@ Vercel → Settings → Environment Variables. The two that matter are
 three `RESEND_*` / `LEAD_NOTIFY_*` variables and every submission also fires
 an email the moment it lands. Leads that sit until Monday do not close.
 
+**Step four — the phone alert.** This is the one that matters. Email is where
+a lead goes to be read later; a push notification is where it goes to be acted
+on now, and the person who needs it is usually on a roof rather than at a desk.
+
+Set `PUSHOVER_TOKEN` and `PUSHOVER_USER` (see `.env.example` for the five-minute
+signup) and every lead buzzes the phone within seconds — name, phone, address
+and the message, with a **tap-to-dial link on the notification itself**. No
+carrier registration, no DNS records, no approval queue.
+
+Two things worth knowing:
+
+- **More than one phone:** make a delivery group at `pushover.net/groups` and
+  use the group key as `PUSHOVER_USER`. After that, adding or removing somebody
+  never touches the website again.
+- **`PUSHOVER_PRIORITY=2`** turns a single alert into an escalation: Pushover
+  re-alerts every five minutes until a human opens it and acknowledges, giving
+  up after an hour. That is lead escalation without a cron job or any extra
+  infrastructure. It is also genuinely hard to ignore, which is the point —
+  turn it on only if leads are being missed at priority 1.
+
+The three paths — database, email, push — are independent. A lead is only
+reported as failed to the visitor if the database write failed *and* no
+notification reached anybody.
+
 **What happens on submit:** the form posts to `/api/lead`, which writes the
 raw payload to `web_submissions`, finds or creates the contact, creates the
 property if an address was given, and files a real row in `leads` with

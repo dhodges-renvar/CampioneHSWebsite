@@ -92,6 +92,66 @@ async function toEmail(body: Payload) {
   return { ok: true as const };
 }
 
+/* Push straight to a phone. Email is where leads go to be read later; this is
+   where they go to be acted on now.
+
+   PUSHOVER_PRIORITY is the one dial worth knowing about:
+     1  (default) high — makes a sound and bypasses quiet hours, shown once
+     2  emergency — Pushover itself re-alerts every PUSHOVER_RETRY seconds
+        until somebody opens it and acknowledges, giving up after
+        PUSHOVER_EXPIRE. That is a lead escalation with no cron job and no
+        extra moving parts, at the cost of being genuinely hard to ignore.
+   Start at 1. Move to 2 if leads are being missed. */
+async function toPushover(body: Payload) {
+  const token = process.env.PUSHOVER_TOKEN;
+  const user = process.env.PUSHOVER_USER;
+  if (!token || !user) return { ok: false, reason: 'not_configured' as const };
+
+  const priority = Number(process.env.PUSHOVER_PRIORITY ?? 1);
+  const name = [body.first_name, body.last_name].filter(Boolean).join(' ') || 'Someone';
+  const where = [body.city, body.zip].filter(Boolean).join(' ');
+
+  const lines = [
+    body.phone && `📞 ${body.phone}`,
+    body.email && `✉️ ${body.email}`,
+    body.address && `📍 ${[body.address, where].filter(Boolean).join(', ')}`,
+    body.service && `Service: ${body.service}`,
+    body.message && `\n"${body.message.slice(0, 400)}"`,
+  ].filter(Boolean);
+
+  const params: Record<string, string> = {
+    token,
+    user,
+    title: `New lead — ${body.division || 'general'}`,
+    message: `${name}\n${lines.join('\n')}`,
+    priority: String(priority),
+    sound: 'persistent',
+  };
+
+  // Tapping the notification dials them. The number is in the body too, in
+  // case the handset does not honour a tel: link from a notification.
+  const digits = (body.phone || '').replace(/\D/g, '');
+  if (digits.length >= 10) {
+    params.url = `tel:+1${digits.slice(-10)}`;
+    params.url_title = `Call ${name} now`;
+  }
+
+  if (priority >= 2) {
+    params.retry = process.env.PUSHOVER_RETRY ?? '300';
+    params.expire = process.env.PUSHOVER_EXPIRE ?? '3600';
+  }
+
+  const res = await fetch('https://api.pushover.net/1/messages.json', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(params).toString(),
+    cache: 'no-store',
+  });
+
+  if (!res.ok) return { ok: false, reason: 'rejected' as const, detail: await res.text() };
+  return { ok: true as const };
+}
+
 export async function POST(req: Request) {
   const ip =
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
@@ -165,10 +225,19 @@ export async function POST(req: Request) {
     ip && ip !== 'unknown' ? createHash('sha256').update(ip).digest('hex').slice(0, 32) : '';
   body.user_agent = clean(req.headers.get('user-agent'), 300);
 
-  const [db, mail] = await Promise.all([toSupabase(body), toEmail(body)]);
+  // Three independent paths on purpose. The lead is only actually lost if the
+  // database failed AND nothing reached a human, so they are judged together
+  // rather than each one being treated as critical.
+  const [db, mail, push] = await Promise.all([
+    toSupabase(body),
+    toEmail(body),
+    toPushover(body),
+  ]);
 
-  if (!db.ok && !mail.ok) {
-    console.error('[lead] not delivered', { db, mail, name: body.first_name });
+  const notified = mail.ok || push.ok;
+
+  if (!db.ok && !notified) {
+    console.error('[lead] not delivered', { db, mail, push, name: body.first_name });
     return NextResponse.json(
       {
         ok: false,
@@ -178,8 +247,10 @@ export async function POST(req: Request) {
     );
   }
 
-  if (!db.ok) console.error('[lead] stored by email only', db);
-  if (!mail.ok && mail.reason === 'rejected') console.error('[lead] email failed', mail);
+  if (!db.ok) console.error('[lead] not stored, but a notification went out', db);
+  if (db.ok && !notified) console.error('[lead] stored but nobody was told', { mail, push });
+  if (mail.reason === 'rejected') console.error('[lead] email failed', mail);
+  if (push.reason === 'rejected') console.error('[lead] push failed', push);
 
   return NextResponse.json({ ok: true });
 }
